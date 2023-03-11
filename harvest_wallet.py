@@ -104,4 +104,4 @@ if __name__ == '__main__':
     if reroll_enabled:
         logging.info('dumping reroll to {}'.format(reroll_location))
         with open(reroll_location, 'w') as file:
-            yaml.dump(yaml.safe_dump(reroll), file)
+            yaml.dump(reroll, file)
