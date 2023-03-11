@@ -11,7 +11,7 @@ logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level='INFO'
 #  CONFIG PART
 wallet_who_collect = os.getenv('NIBID_ADDR')  # put the address who should collectd
 wallet_password = os.getenv('NIBID_ADD_PASSWORD')  # put your password prompt
-wallet_to_harvest_pattern = 'harvest'  # wallet pattern to harvest
+wallet_to_harvest_pattern = ['harvest']  # wallet pattern to harvest
 wallet_minimum_harvest = 25000  # minimal unibi to get
 file_to_read = 'sample.yml'  # output file generated from nibib keys list > sample.yml
 reroll_enabled = True  # This option allow to generate a file with address unused.
@@ -24,8 +24,9 @@ def collect_wallet_info():
     nibid_wallet = yaml.safe_load(stream)
     wallets = []
     for x, line in enumerate(nibid_wallet):
-        if wallet_to_harvest_pattern in line['name']:
-            wallets.append({'name': line['name'], 'address': line['address']})
+        for pattern in wallet_to_harvest_pattern:
+            if pattern in line['name']:
+                wallets.append({'name': line['name'], 'address': line['address']})
     return wallets
 
 
