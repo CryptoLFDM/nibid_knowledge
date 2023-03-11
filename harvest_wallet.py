@@ -10,7 +10,7 @@ logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level='INFO'
 
 #  CONFIG PART
 wallet_who_collect = os.getenv('NIBID_ADDR')  # put the address who should collectd
-wallet_password = os.getenv('NIBID_ADD_PASSWORD')  # put your password prompt
+wallet_password = os.getenv('NIBID_ADDR_PASSWORD')  # put your password prompt
 wallet_to_harvest_pattern = ['harvest']  # wallet pattern to harvest
 wallet_minimum_harvest = 25000  # minimal unibi to get
 file_to_read = 'sample.yml'  # output file generated from nibib keys list > sample.yml
