@@ -17,7 +17,6 @@ reroll_enabled = True  # This option allow to generate a file with address unuse
 reroll = []
 reroll_location = 'reroll.yml'
 
-
 # This method parse the whole wallet file and only return the one who match pattern
 def collect_wallet_info():
     stream = open(file_to_read, 'r')  # 'document.yaml' contains a single YAML document.
@@ -85,7 +84,7 @@ def harvest_wallet(wallets):
                 continue
         logging.info('Gonna harvest {}'.format(harvestable))
 
-        fees = 0
+        fees = 5000
         for asset in harvestable['assets']:
             logging.info('Gonna harvest {} from {} | {}'.format(asset, wallet_name, wallet_address))
             run_harvest(harvestable['address'], asset, harvestable['assets'][asset])
