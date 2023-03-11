@@ -17,7 +17,7 @@ def add_address(x):
 
 for x, line in enumerate(obj):
     addresses.append(line['address'])
-    if x % 10 == 0 and x > 0:
+    if x % 20 == 0 and x > 0:
         add_address(x)
         addresses = []
 add_address(x)
