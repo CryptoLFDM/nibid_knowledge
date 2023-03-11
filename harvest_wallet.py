@@ -43,13 +43,13 @@ def check_wallet_amount(response, wallet_name):
         for asset in response['assets']:
             if ('uusdt' in asset['denom'] or 'unusd' in asset['denom']) and asset['amount'] == 100000000:
                 custom_response['assets'][asset['denom']] = asset['amount']
+        return custom_response
     else:
         logging.warning('Not gonna harvest {} | {}, not enought unibi minimun is set to {} unibi'.format(wallet_name,
                                                                                                          response[
                                                                                                              'address'],
-                                                                                                         wallet_minimum_harvest))
-    return custom_response
-
+                                                                                                           wallet_minimum_harvest))
+    return None
 
 # This method run nibid tx
 def run_harvest(address, asset, amount):
@@ -75,12 +75,14 @@ def harvest_wallet(wallets):
         resp = requests.get('https://api.nibiru.exploreme.pro/accounts/{}'.format(wallet_address))
         if resp.status_code != 200:
             logging.warning('{} | {} not found on explorer'.format(wallet_address, wallet_name))
-            if reroll:
+            if reroll_enabled:
                 logging.info('{} | {} added to reroll'.format(wallet_address, wallet_name))
                 reroll.append({'name': wallet_name, 'address': wallet_address})
             continue
         else:
             harvestable = check_wallet_amount(resp.json(), wallet_name)
+            if harvestable is None:
+                continue
         logging.info('Gonna harvest {}'.format(harvestable))
 
         fees = 0
