@@ -7,19 +7,21 @@ import requests  # Thoses packages need to be installed
 import yaml
 import colorlog
 
-
 # Logging part
-INFO = 1
-SUCCESS = 2
-ABORTED = 3
-WARNING = 4
-FAILED = 5
+DEFAULT = 1
+INFO = 2
+SUCCESS = 3
+ABORTED = 4
+WARNING = 5
+FAILED = 6
+logging.addLevelName(DEFAULT, 'INFO')
 logging.addLevelName(INFO, 'INFO')
 logging.addLevelName(SUCCESS, 'SUCCESS')
 logging.addLevelName(ABORTED, 'ABORTED')
 logging.addLevelName(WARNING, 'WARNING')
 logging.addLevelName(FAILED, 'FAILED')
 color_mapping = {
+    "DEFAULT": 'grey',
     "INFO": 'cyan',
     'SUCCESS': 'green',
     "ABORTED": 'yellow',
@@ -32,10 +34,7 @@ handler = logging.StreamHandler()
 handler.setFormatter(formatter)
 logger = logging.getLogger('harvest_wallet')
 logger.addHandler(handler)
-logger.setLevel(INFO)
-
-
-
+logger.setLevel(DEFAULT)
 
 #  CONFIG PART
 wallet_who_collect = os.getenv('NIBID_ADDR')  # put the address who should collectd
@@ -76,14 +75,16 @@ def check_wallet_amount(response, wallet_name):
                 custom_response['assets'][asset['denom']] = asset['amount']
         return custom_response
     else:
-        logger.log(WARNING, 'Not gonna harvest {} | {}, not enought unibi minimun is set to {} unibi'.format(wallet_name,
-                                                                                                         response[
-                                                                                                             'address'],
-                                                                                                           wallet_minimum_harvest))
+        logger.log(WARNING,
+                   'Not gonna harvest {} | {}, not enought unibi minimun is set to {} unibi'.format(wallet_name,
+                                                                                                    response[
+                                                                                                        'address'],
+                                                                                                    wallet_minimum_harvest))
     return None
 
+
 # This method run nibid tx
-def run_harvest(address, asset, amount):
+def fire_cmd(address, asset, amount):
     args = '/usr/local/bin/nibid tx bank send {} {} {}{} --fees 5000unibi --log_format json -y'.format(address,
                                                                                                        wallet_who_collect,
                                                                                                        amount,
@@ -98,42 +99,62 @@ def run_harvest(address, asset, amount):
         process.communicate(wallet_password)
 
 
+def harvest_wallet(harvestable):
+    fees = 5000
+    for asset in harvestable['assets']:
+        logger.log(DEFAULT,
+                   'Gonna harvest {} from {} | {}'.format(asset, harvestable['wallet_name'], harvestable['address']))
+        fire_cmd(harvestable['address'], asset, harvestable['assets'][asset])
+        time.sleep(2)
+        logger.log(DEFAULT, 'Wait 2 seconds between calls')
+        fees = fees + 5000
+    logger.log(INFO,
+               'Gonna harvest {} from {} | {}'.format('unibi', harvestable['wallet_name'], harvestable['address']))
+    fire_cmd(harvestable['address'], 'unibi', harvestable['unibi'] - fees)
+    time.sleep(2)
+    logger.log(DEFAULT, 'Wait 2 seconds between calls')
+
+
+def get_wallet_amount(wallet_address, wallet_name):
+    resp = requests.get('https://api.nibiru.exploreme.pro/accounts/{}'.format(wallet_address))
+    if resp.status_code != 200:
+        logger.log(ABORTED, '{} | {} not found on explorer'.format(wallet_address, wallet_name))
+        if reroll_enabled:
+            logger.log(INFO, '{} | {} added to reroll'.format(wallet_address, wallet_name))
+            reroll.append({'name': wallet_name, 'address': wallet_address})
+    return resp
+
+
+def final_check(initial_data):
+    resp = get_wallet_amount(initial_data['address'], initial_data['wallet_name'])
+    now_data = check_wallet_amount(resp.json(), initial_data['wallet_name'])
+    if initial_data == now_data:
+        logger.log(FAILED, '{} | {}, data unchanged'.format(initial_data['address'], initial_data['wallet_name']))
+    elif now_data['unibi'] < 25000:
+        logger.log(SUCCESS, '{} | {}, unibi under minimal'.format(initial_data['address'], initial_data['wallet_name']))
+    else:
+        logger.log(FAILED, '{} | {},  unibi over minimal'.format(initial_data['address'], initial_data['wallet_name']))
+
+
 # This is the main loop who harvest all wallet & all asset
-def harvest_wallet(wallets):
+def loop_wallet(wallets):
     for wallet in wallets:
         wallet_name = wallet['name']
         wallet_address = wallet['address']
         logger.log(INFO, 'Proceed {} | {}'.format(wallet_address, wallet_name))
-        resp = requests.get('https://api.nibiru.exploreme.pro/accounts/{}'.format(wallet_address))
-        if resp.status_code != 200:
-            logger.log(ABORTED, '{} | {} not found on explorer'.format(wallet_address, wallet_name))
-            if reroll_enabled:
-                logger.log(INFO, '{} | {} added to reroll'.format(wallet_address, wallet_name))
-                reroll.append({'name': wallet_name, 'address': wallet_address})
+        resp = get_wallet_amount(wallet_address, wallet_name)
+        if resp != 200:
             continue
-        else:
-            harvestable = check_wallet_amount(resp.json(), wallet_name)
-            if harvestable is None:
-                continue
-        logger.log(INFO, 'Gonna harvest {}'.format(harvestable))
-
-        fees = 5000
-        for asset in harvestable['assets']:
-            logger.log(INFO, 'Gonna harvest {} from {} | {}'.format(asset, harvestable['wallet_name'], harvestable['address']))
-            run_harvest(harvestable['address'], asset, harvestable['assets'][asset])
-            time.sleep(2)
-            logger.log(INFO, 'Wait 2 seconds between calls')
-            fees = fees + 5000
-        logger.log(INFO, 'Gonna harvest {} from {} | {}'.format('unibi', harvestable['wallet_name'], harvestable['address']))
-        run_harvest(harvestable['address'], 'unibi', harvestable['unibi'] - fees)
-        time.sleep(2)
-        logger.log(INFO, 'Wait 2 seconds between calls')
+        harvestable = check_wallet_amount(resp.json(), wallet_name)
+        logger.log(DEFAULT, 'Gonna harvest {}'.format(harvestable))
+        harvest_wallet(harvestable)
+        final_check(harvestable)
 
 
 if __name__ == '__main__':
     wallets_from_file = collect_wallet_info()
-    harvest_wallet(wallets_from_file)
+    loop_wallet(wallets_from_file)
     if reroll_enabled:
-        logger.log(INFO, 'dumping reroll to {}'.format(reroll_location))
+        logger.log(DEFAULT, 'dumping reroll to {}'.format(reroll_location))
         with open(reroll_location, 'w') as file:
             yaml.dump(reroll, file)
