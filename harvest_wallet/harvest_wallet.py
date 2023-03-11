@@ -40,7 +40,7 @@ logger.setLevel(INFO)
 #  CONFIG PART
 wallet_who_collect = os.getenv('NIBID_ADDR')  # put the address who should collectd
 wallet_password = os.getenv('NIBID_ADDR_PASSWORD')  # put your password prompt
-wallet_to_harvest_pattern = ['harvest']  # wallet pattern to harvest
+wallet_to_harvest_pattern = ['harvest', 'rookie']  # wallet pattern to harvest
 wallet_minimum_harvest = 25000  # minimal unibi to get
 file_to_read = 'sample.yml'  # output file generated from nibib keys list > sample.yml
 reroll_enabled = True  # This option allow to generate a file with address unused.
@@ -88,6 +88,7 @@ def run_harvest(address, asset, amount):
                                                                                                        wallet_who_collect,
                                                                                                        amount,
                                                                                                        asset)
+    logger.log(INFO, 'Gonna play {}'.format(args))
     process = subprocess.Popen([args],
                                stdout=subprocess.PIPE,
                                stdin=subprocess.PIPE,
@@ -118,12 +119,12 @@ def harvest_wallet(wallets):
 
         fees = 5000
         for asset in harvestable['assets']:
-            logger.log(INFO, 'Gonna harvest {} from {} | {}'.format(asset, wallet_name, wallet_address))
+            logger.log(INFO, 'Gonna harvest {} from {} | {}'.format(asset, harvestable['wallet_name'], harvestable['address']))
             run_harvest(harvestable['address'], asset, harvestable['assets'][asset])
             time.sleep(2)
             logger.log(INFO, 'Wait 2 seconds between calls')
             fees = fees + 5000
-        logger.log(INFO, 'Gonna harvest {} from {} | {}'.format('unibi', wallet_name, wallet_address))
+        logger.log(INFO, 'Gonna harvest {} from {} | {}'.format('unibi', harvestable['wallet_name'], harvestable['address']))
         run_harvest(harvestable['address'], 'unibi', harvestable['unibi'] - fees)
         time.sleep(2)
         logger.log(INFO, 'Wait 2 seconds between calls')
