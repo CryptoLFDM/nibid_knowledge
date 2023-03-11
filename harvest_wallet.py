@@ -102,4 +102,5 @@ if __name__ == '__main__':
     harvest_wallet(wallets_from_file)
     if reroll_enabled:
         logging.info('dumping reroll to {}'.format(reroll_location))
-        yaml.safe_dump(reroll)
+        with open(reroll_location, 'w') as file:
+            yaml.dump(yaml.safe_dump(reroll), file)
