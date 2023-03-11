@@ -51,7 +51,8 @@ def run_harvest(address, asset, amount):
                                stdin=subprocess.PIPE,
                                universal_newlines=True,
                                shell=True)
-    process.communicate(wallet_password)
+    if wallet_password != "":
+        process.communicate(wallet_password)
 
 # This is the main loop who harvest all wallet & all asset
 def harvest_wallet(wallets):
