@@ -3,7 +3,7 @@ import yaml
 stream = open('wallet.yml', 'r')
 obj = yaml.safe_load(stream)
 addresses = []
-patterns = ['berlin']
+patterns = ['vienne']
 
 def epur_yaml(wallets):
     harvest = []
@@ -13,9 +13,9 @@ def epur_yaml(wallets):
                 harvest.append(wallet)
     return harvest
 
-def add_address(x):
+def add_address(x, i):
     a = open("pattern.sh", "r")
-    d = open("sample/shell_{}.sh".format(x), "w")
+    d = open("sample/{}".format(i), "w")
     for i, sample in enumerate(a):
         d.write(sample)
         if i == 2:
@@ -26,11 +26,15 @@ def add_address(x):
 
 
 wallets = epur_yaml(obj)
+i = 1
 for x, line in enumerate(wallets):
     addresses.append(line['address'])
     if x % 40 == 0 and x > 0:
-        add_address(x)
+        add_address(x, i)
         addresses = []
-add_address(x)
+        i = i + 1
+
+if x % 40 != 0:
+    add_address(x, i)
 
 stream.close()
