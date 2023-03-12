@@ -39,7 +39,7 @@ logger.setLevel(DEFAULT)
 #  CONFIG PART
 wallet_who_collect = os.getenv('NIBID_ADDR')  # put the address who should collectd
 wallet_password = os.getenv('NIBID_ADDR_PASSWORD')  # put your password prompt
-wallet_to_harvest_pattern = ['harvest', 'rookie']  # wallet pattern to harvest
+wallet_to_harvest_pattern = ['rookie', 'londre', 'berlin', 'prague']  # wallet pattern to harvest
 wallet_minimum_harvest = 25000  # minimal unibi to get
 file_to_read = 'sample.yml'  # output file generated from nibib keys list > sample.yml
 reroll_enabled = True  # This option allow to generate a file with address unused.
@@ -143,12 +143,15 @@ def loop_wallet(wallets):
         wallet_address = wallet['address']
         logger.log(INFO, 'Proceed {} | {}'.format(wallet_address, wallet_name))
         resp = get_wallet_amount(wallet_address, wallet_name)
-        if resp != 200:
+        if resp.status_code != 200:
             continue
         harvestable = check_wallet_amount(resp.json(), wallet_name)
+        if harvestable is None:
+            logger.log(ABORTED, '{} | {} nothing to harvest'.format(wallet_address, wallet_name))
+            continue
         logger.log(DEFAULT, 'Gonna harvest {}'.format(harvestable))
         harvest_wallet(harvestable)
-        final_check(harvestable)
+        #final_check(harvestable)
 
 
 if __name__ == '__main__':
