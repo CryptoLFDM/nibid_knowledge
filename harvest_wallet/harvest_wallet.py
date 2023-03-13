@@ -45,7 +45,7 @@ file_to_read = 'sample.yml'  # output file generated from nibib keys list > samp
 reroll_enabled = True  # This option allow to generate a file with address unused.
 reroll = []
 reroll_location = 'reroll.yml'
-
+dust_on_wallet = 1000000
 
 # This method parse the whole wallet file and only return the one who match pattern
 def collect_wallet_info():
@@ -110,7 +110,7 @@ def harvest_wallet(harvestable):
         fees = fees + 5000
     logger.log(INFO,
                'Gonna harvest {} from {} | {}'.format('unibi', harvestable['wallet_name'], harvestable['address']))
-    fire_cmd(harvestable['address'], 'unibi', harvestable['unibi'] - fees)
+    fire_cmd(harvestable['address'], 'unibi', harvestable['unibi'] - fees - dust_on_wallet)
     time.sleep(2)
     logger.log(DEFAULT, 'Wait 2 seconds between calls')
 
