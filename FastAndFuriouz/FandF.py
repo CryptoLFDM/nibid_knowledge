@@ -2,7 +2,7 @@ import argparse
 import asyncio
 import aiohttp
 import yaml
-
+import json
 
 def epur_yaml():
     stream = open('wallet.yml', 'r')
@@ -40,10 +40,10 @@ async def make_account():
 
 
 async def do_post(session, url, x):
-    data = {"address": x, "coins": ["110000000unibi", "100000000unusd", "100000000uusdt"]}
-    async with session.post(url, data=data) as response:
+    req = {"address": x, "coins": ["110000000unibi", "100000000unusd", "100000000uusdt"]}
+    json_object = json.dumps(req, indent=4)
+    async with session.post(url, data=json_object) as response:
         data = await response.text()
-        print(data)
 
 
 parser = argparse.ArgumentParser(
