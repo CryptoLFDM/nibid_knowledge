@@ -45,6 +45,9 @@ file_to_read = 'sample.yml'  # output file generated from nibib keys list > samp
 reroll_enabled = True  # This option allow to generate a file with address unused.
 reroll = []
 reroll_location = 'reroll.yml'
+delete_enabled = True  # This option allow to generate a file with address unused.
+delete = []
+delete_location = 'delete.yml'
 dust_on_wallet = 1000000
 
 # This method parse the whole wallet file and only return the one who match pattern
@@ -80,6 +83,7 @@ def check_wallet_amount(response, wallet_name):
                                                                                                     response[
                                                                                                         'address'],
                                                                                                     wallet_minimum_harvest))
+        delete.append({'name': wallet_name, 'address': response['address']})
     return None
 
 
@@ -161,3 +165,7 @@ if __name__ == '__main__':
         logger.log(DEFAULT, 'dumping reroll to {}'.format(reroll_location))
         with open(reroll_location, 'w') as file:
             yaml.dump(reroll, file)
+    if delete_enabled:
+        logger.log(DEFAULT, 'dumping delete to {}'.format(reroll_location))
+        with open(delete_location, 'w') as file:
+            yaml.dump(delete, file)
