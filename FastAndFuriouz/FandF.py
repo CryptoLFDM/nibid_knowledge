@@ -4,6 +4,7 @@ import aiohttp
 import yaml
 import json
 
+result = []
 def epur_yaml():
     stream = open('wallet.yml', 'r')
     obj = yaml.safe_load(stream)
@@ -43,7 +44,15 @@ async def do_post(session, url, x):
     req = {"address": x, "coins": ["110000000unibi", "100000000unusd", "100000000uusdt"]}
     json_object = json.dumps(req, indent=4)
     async with session.post(url, data=json_object) as response:
-        data = await response.text()
+        result.append(await response.text())
+
+def display_result():
+    ko = 0
+    for value in result:
+        if  "error" in value:
+            ko = ko + 1
+    print('{}/{} went into error.'.format(ko, len(result)))
+
 
 
 parser = argparse.ArgumentParser(
@@ -71,10 +80,10 @@ if args.mode == 'gen':
         i + i + 1
         with open('sample/{}'.format(i), 'w') as file:
             yaml.dump(addresses, file)
-
 else:
     loop = asyncio.get_event_loop()
     try:
         loop.run_until_complete(make_account())
+        display_result()
     except:
         pass
