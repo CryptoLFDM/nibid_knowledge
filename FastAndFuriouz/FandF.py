@@ -74,6 +74,7 @@ if args.mode == 'gen':
         if x % args.batch == 0 and x > 0:
             with open('sample/{}'.format(i), 'w') as file:
                 yaml.dump(addresses, file)
+                addresses = []
             i = i + 1
 
     if x % 40 != 0:
