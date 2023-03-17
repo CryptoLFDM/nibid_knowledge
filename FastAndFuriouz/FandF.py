@@ -70,6 +70,7 @@ patterns = []
 if args.mode == 'gen':
     i = 1
     wallets = epur_yaml()
+    x = 0
     if not os.path.exists('sample'):
         os.makedirs('sample')
         print("The new directory is created!")
