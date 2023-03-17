@@ -48,7 +48,6 @@ reroll_location = 'reroll.yml'
 delete_enabled = True  # This option allow to generate a file with address unused.
 delete = []
 delete_location = 'delete.yml'
-dust_on_wallet = 1000000
 
 # This method parse the whole wallet file and only return the one who match pattern
 def collect_wallet_info():
@@ -83,6 +82,7 @@ def check_wallet_amount(response, wallet_name):
                                                                                                     response[
                                                                                                         'address'],
                                                                                                     wallet_minimum_harvest))
+        logger.log(SUCCESS, '{} | {} added to delete.yml'.format(response['address'], wallet_name))
         delete.append({'name': wallet_name, 'address': response['address']})
     return None
 
@@ -114,7 +114,7 @@ def harvest_wallet(harvestable):
         fees = fees + 5000
     logger.log(INFO,
                'Gonna harvest {} from {} | {}'.format('unibi', harvestable['wallet_name'], harvestable['address']))
-    fire_cmd(harvestable['address'], 'unibi', harvestable['unibi'] - fees - dust_on_wallet)
+    fire_cmd(harvestable['address'], 'unibi', harvestable['unibi'] - fees)
     time.sleep(2)
     logger.log(DEFAULT, 'Wait 2 seconds between calls')
 
@@ -124,7 +124,7 @@ def get_wallet_amount(wallet_address, wallet_name):
     if resp.status_code != 200:
         logger.log(ABORTED, '{} | {} not found on explorer'.format(wallet_address, wallet_name))
         if reroll_enabled:
-            logger.log(INFO, '{} | {} added to reroll'.format(wallet_address, wallet_name))
+            logger.log(SUCCESS, '{} | {} added to reroll.yml'.format(wallet_address, wallet_name))
             reroll.append({'name': wallet_name, 'address': wallet_address})
     return resp
 
