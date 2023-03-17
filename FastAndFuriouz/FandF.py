@@ -3,6 +3,7 @@ import asyncio
 import aiohttp
 import yaml
 import json
+import os
 
 result = []
 def epur_yaml():
@@ -27,6 +28,9 @@ async def make_numbers(obj):
 
 
 async def make_account():
+    if not os.path.exists('sample'):
+        os.makedirs('sample')
+        print("The new directory is created!")
     stream = open('sample/{}'.format(args.iterator), 'r')
     obj = yaml.safe_load(stream)
     url = "https://faucet.itn-1.nibiru.fi/"
