@@ -28,9 +28,6 @@ async def make_numbers(obj):
 
 
 async def make_account():
-    if not os.path.exists('sample'):
-        os.makedirs('sample')
-        print("The new directory is created!")
     stream = open('sample/{}'.format(args.iterator), 'r')
     obj = yaml.safe_load(stream)
     url = "https://faucet.itn-1.nibiru.fi/"
@@ -53,7 +50,7 @@ async def do_post(session, url, x):
 def display_result():
     ko = 0
     for value in result:
-        if  "error" in value:
+        if "error" in value:
             ko = ko + 1
     print('{}/{} went into error.'.format(ko, len(result)))
 
@@ -73,6 +70,9 @@ patterns = []
 if args.mode == 'gen':
     i = 1
     wallets = epur_yaml()
+    if not os.path.exists('sample'):
+        os.makedirs('sample')
+        print("The new directory is created!")
     for x, line in enumerate(wallets):
         addresses.append(line['address'])
         if x % args.batch == 0 and x > 0:
