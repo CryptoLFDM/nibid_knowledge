@@ -39,7 +39,7 @@ logger.setLevel(DEFAULT)
 #  CONFIG PART
 wallet_who_collect = os.getenv('NIBID_ADDR')  # put the address who should collectd
 wallet_password = os.getenv('NIBID_ADDR_PASSWORD')  # put your password prompt
-wallet_to_harvest_pattern = ['bern', 'douceur', 'harvest', 'lfdm', 'londre', 'oslow', 'prague', 'remote', 'rookie', 'yolo', 'chimera-alpha', 'lisbonne', 'madrid', 'paris', 'rome', 'vienne']
+wallet_blacklist = ['douceur', 'yolo', 'chimera']
 wallet_minimum_harvest = 25000  # minimal unibi to get
 file_to_read = 'sample.yml'  # output file generated from nibib keys list > sample.yml
 reroll_enabled = True  # This option allow to generate a file with address unused.
@@ -55,8 +55,8 @@ def collect_wallet_info():
     nibid_wallet = yaml.safe_load(stream)
     wallets = []
     for x, line in enumerate(nibid_wallet):
-        for pattern in wallet_to_harvest_pattern:
-            if pattern in line['name']:
+        for pattern in wallet_blacklist:
+            if pattern not in line['name']:
                 wallets.append({'name': line['name'], 'address': line['address']})
     return wallets
 
@@ -128,18 +128,6 @@ def get_wallet_amount(wallet_address, wallet_name):
             reroll.append({'name': wallet_name, 'address': wallet_address})
     return resp
 
-
-def final_check(initial_data):
-    resp = get_wallet_amount(initial_data['address'], initial_data['wallet_name'])
-    now_data = check_wallet_amount(resp.json(), initial_data['wallet_name'])
-    if initial_data == now_data:
-        logger.log(FAILED, '{} | {}, data unchanged'.format(initial_data['address'], initial_data['wallet_name']))
-    elif now_data['unibi'] < 25000:
-        logger.log(SUCCESS, '{} | {}, unibi under minimal'.format(initial_data['address'], initial_data['wallet_name']))
-    else:
-        logger.log(FAILED, '{} | {},  unibi over minimal'.format(initial_data['address'], initial_data['wallet_name']))
-
-
 # This is the main loop who harvest all wallet & all asset
 def loop_wallet(wallets):
     for wallet in wallets:
@@ -155,7 +143,6 @@ def loop_wallet(wallets):
             continue
         logger.log(DEFAULT, 'Gonna harvest {}'.format(harvestable))
         harvest_wallet(harvestable)
-        #final_check(harvestable)
 
 
 if __name__ == '__main__':
