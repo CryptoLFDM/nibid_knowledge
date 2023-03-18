@@ -128,18 +128,6 @@ def get_wallet_amount(wallet_address, wallet_name):
             reroll.append({'name': wallet_name, 'address': wallet_address})
     return resp
 
-
-def final_check(initial_data):
-    resp = get_wallet_amount(initial_data['address'], initial_data['wallet_name'])
-    now_data = check_wallet_amount(resp.json(), initial_data['wallet_name'])
-    if initial_data == now_data:
-        logger.log(FAILED, '{} | {}, data unchanged'.format(initial_data['address'], initial_data['wallet_name']))
-    elif now_data['unibi'] < 25000:
-        logger.log(SUCCESS, '{} | {}, unibi under minimal'.format(initial_data['address'], initial_data['wallet_name']))
-    else:
-        logger.log(FAILED, '{} | {},  unibi over minimal'.format(initial_data['address'], initial_data['wallet_name']))
-
-
 # This is the main loop who harvest all wallet & all asset
 def loop_wallet(wallets):
     for wallet in wallets:
@@ -155,7 +143,6 @@ def loop_wallet(wallets):
             continue
         logger.log(DEFAULT, 'Gonna harvest {}'.format(harvestable))
         harvest_wallet(harvestable)
-        #final_check(harvestable)
 
 
 if __name__ == '__main__':
@@ -166,6 +153,6 @@ if __name__ == '__main__':
         with open(reroll_location, 'w') as file:
             yaml.dump(reroll, file)
     if delete_enabled:
-        logger.log(DEFAULT, 'dumping delete to {}'.format(reroll_location))
+        logger.log(DEFAULT, 'dumping delete to {}'.format(delete_location))
         with open(delete_location, 'w') as file:
             yaml.dump(delete, file)
