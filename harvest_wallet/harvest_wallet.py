@@ -58,6 +58,7 @@ def collect_wallet_info():
         for pattern in wallet_blacklist:
             if pattern not in line['name']:
                 wallets.append({'name': line['name'], 'address': line['address']})
+                continue
     return wallets
 
 
