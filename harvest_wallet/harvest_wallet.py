@@ -58,6 +58,7 @@ def collect_wallet_info():
         for pattern in wallet_blacklist:
             if pattern not in line['name']:
                 wallets.append({'name': line['name'], 'address': line['address']})
+                continue
     return wallets
 
 
@@ -153,6 +154,6 @@ if __name__ == '__main__':
         with open(reroll_location, 'w') as file:
             yaml.dump(reroll, file)
     if delete_enabled:
-        logger.log(DEFAULT, 'dumping delete to {}'.format(reroll_location))
+        logger.log(DEFAULT, 'dumping delete to {}'.format(delete_location))
         with open(delete_location, 'w') as file:
             yaml.dump(delete, file)
