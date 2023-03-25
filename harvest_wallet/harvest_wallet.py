@@ -87,6 +87,7 @@ def check_wallet_amount(response, wallet_name):
         delete_wallet(wallet_name)
     return None
 
+
 def delete_wallet(name):
     args = '/usr/local/bin/nibid keys delete {} -y'.format(name)
     logger.log(INFO, 'Gonna play {}'.format(args))
@@ -127,6 +128,7 @@ def harvest_wallet(harvestable):
                'Gonna harvest {} from {} | {}'.format('unibi', harvestable['wallet_name'], harvestable['address']))
     fire_cmd(harvestable['address'], 'unibi', harvestable['unibi'] - fees)
     time.sleep(2)
+    delete_wallet(harvestable['wallet_name'])
     logger.log(DEFAULT, 'Wait 2 seconds between calls')
 
 
