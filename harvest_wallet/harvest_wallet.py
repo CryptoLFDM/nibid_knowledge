@@ -84,9 +84,19 @@ def check_wallet_amount(response, wallet_name):
                                                                                                         'address'],
                                                                                                     wallet_minimum_harvest))
         logger.log(SUCCESS, '{} | {} added to delete.yml'.format(response['address'], wallet_name))
-        delete.append({'name': wallet_name, 'address': response['address']})
+        delete_wallet(wallet_name)
     return None
 
+def delete_wallet(name):
+    args = '/usr/local/bin/nibid keys delete {} -y'.format(name)
+    logger.log(INFO, 'Gonna play {}'.format(args))
+    process = subprocess.Popen([args],
+                               stdout=subprocess.PIPE,
+                               stdin=subprocess.PIPE,
+                               universal_newlines=True,
+                               shell=True)
+    if wallet_password != '':
+        process.communicate(wallet_password)
 
 # This method run nibid tx
 def fire_cmd(address, asset, amount):
@@ -153,7 +163,5 @@ if __name__ == '__main__':
         logger.log(DEFAULT, 'dumping reroll to {}'.format(reroll_location))
         with open(reroll_location, 'w') as file:
             yaml.dump(reroll, file)
-    if delete_enabled:
-        logger.log(DEFAULT, 'dumping delete to {}'.format(delete_location))
         with open(delete_location, 'w') as file:
             yaml.dump(delete, file)
