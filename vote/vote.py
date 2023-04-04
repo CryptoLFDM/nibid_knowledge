@@ -40,7 +40,7 @@ logger.setLevel(DEFAULT)
 wallet_who_collect = os.getenv('NIBID_ADDR')  # put the address who should collectd
 wallet_password = os.getenv('NIBID_ADDR_PASSWORD')  # put your password prompt
 #wallet_to_harvest_pattern = ['berlin', 'vienne', 'paris', 'madrid', 'lisbonne']
-wallet_to_harvest_pattern = [ 'bern', 'douceur', 'harvest', 'lfdm', 'londre', 'oslow', 'prague', 'remote', 'rookie', 'yolo', 'chimera-alpha', 'lisbonne', 'madrid', 'paris', 'rome', 'vienne']
+wallet_blacklist = ['douceur', 'yolo', 'chimera']
 wallet_minimum_harvest = 25000  # minimal unibi to get
 file_to_read = 'sample.yml'  # output file generated from nibib keys list > sample.yml
 reroll_enabled = True  # This option allow to generate a file with address unused.
@@ -54,9 +54,10 @@ def collect_wallet_info():
     nibid_wallet = yaml.safe_load(stream)
     wallets = []
     for x, line in enumerate(nibid_wallet):
-        for pattern in wallet_to_harvest_pattern:
-            if pattern in line['name']:
+        for pattern in wallet_blacklist:
+            if pattern not in line['name']:
                 wallets.append({'name': line['name'], 'address': line['address']})
+                continue
     return wallets
 
 # This method run nibid tx
