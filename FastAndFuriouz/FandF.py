@@ -30,7 +30,7 @@ async def make_numbers(obj):
 async def make_account():
     stream = open('sample/{}'.format(args.iterator), 'r')
     obj = yaml.safe_load(stream)
-    url = "https://faucet.itn-1.nibiru.fi/"
+    url = "https://faucet.itn-2.nibiru.fi/"
     async with aiohttp.ClientSession() as session:
         post_tasks = []
         # prepare the coroutines that post
@@ -68,7 +68,6 @@ addresses = []
 patterns = []
 
 if args.mode == 'gen':
-    i = 1
     wallets = epur_yaml()
     x = 0
     if not os.path.exists('sample'):
