@@ -1,0 +1,4 @@
+pyaml
+requests
+colorlog
+click
