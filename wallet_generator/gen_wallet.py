@@ -41,8 +41,8 @@ logger.setLevel(DEFAULT)
 wallet_password = os.getenv('NIBIRU_ADDR_PASSWORD')  # put your password prompt
 
 
-def fire_cmd(name: str, number: int):
-    args = 'nibiru keys add {}_{} -y'.format(name, number)
+def fire_cmd(name: str, number: int, home: str):
+    args = 'nibiru  --home {} keys add {}_{} -y'.format(home, name, number)
     logger.log(INFO, 'Gonna play {}'.format(args))
     process = subprocess.Popen([args],
                                stdout=subprocess.PIPE,
@@ -56,9 +56,10 @@ def fire_cmd(name: str, number: int):
 @click.command()
 @click.option('--wallet_base_name', '-w', type=str, help='wallet base name prefix', required=True)
 @click.option('--number', '-n', type=int, help='number of wallet to generate as suffix', required=True)
-def loop_wallet(wallet_base_name, number):
+@click.option('--home', '-h', type=str, help='node home', required=True)
+def loop_wallet(wallet_base_name, number, home):
     for i in range(number):
-        fire_cmd(wallet_base_name, i)
+        fire_cmd(wallet_base_name, i, home)
 
 
 if __name__ == '__main__':
