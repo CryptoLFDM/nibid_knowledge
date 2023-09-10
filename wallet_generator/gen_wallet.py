@@ -42,7 +42,7 @@ wallet_password = os.getenv('NIBIRU_ADDR_PASSWORD')  # put your password prompt
 
 
 def fire_cmd(name: str, number: int, home: str):
-    args = 'nibiru  --home {} keys add {}_{} -y'.format(home, name, number)
+    args = 'nibiru  --home {} keys add {}_{}'.format(home, name, number)
     logger.log(INFO, 'Gonna play {}'.format(args))
     process = subprocess.Popen([args],
                                stdout=subprocess.PIPE,
