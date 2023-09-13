@@ -2,6 +2,7 @@ import logging
 import subprocess
 import time
 import os
+import json
 
 import requests  # Thoses packages need to be installed
 import yaml
@@ -62,32 +63,6 @@ def collect_wallet_info():
     return wallets
 
 
-# This method ask explorer.pro to get wallet status and create a custom object of what should be harvested
-def check_wallet_amount(response, wallet_name):
-    #    var = {'address': 'nibi1y3cehkfcvk5wml52yz2aeqqf92et8xwcwcne8a',
-    #           'wallet': {'available': 110000000, 'vesting': 0, 'delegated': 0, 'unbonding': 0, 'reward': 0,
-    #                      'commission': 0},
-    #           'assets': [{'denom': 'unibi', 'amount': 110000000}, {'denom': 'unusd', 'amount': 100000000},
-    #                      {'denom': 'uusdt', 'amount': 100000000}]}
-    custom_response = {'address': '', 'wallet_name': wallet_name, 'assets': {}}
-    if response['wallet']['available'] > wallet_minimum_harvest:
-        custom_response['address'] = response['address']
-        custom_response['unibi'] = response['wallet']['available']
-        for asset in response['assets']:
-            if ('uusdt' in asset['denom'] or 'unusd' in asset['denom']) and asset['amount'] == 100000000:
-                custom_response['assets'][asset['denom']] = asset['amount']
-        return custom_response
-    else:
-        logger.log(WARNING,
-                   'Not gonna harvest {} | {}, not enought unibi minimun is set to {} unibi'.format(wallet_name,
-                                                                                                    response[
-                                                                                                        'address'],
-                                                                                                    wallet_minimum_harvest))
-        logger.log(SUCCESS, '{} | {} added to delete.yml'.format(response['address'], wallet_name))
-        delete_wallet(wallet_name)
-    return None
-
-
 def delete_wallet(name):
     args = '/usr/local/bin/nibid keys delete {} -y'.format(name)
     logger.log(INFO, 'Gonna play {}'.format(args))
@@ -132,14 +107,39 @@ def harvest_wallet(harvestable):
     logger.log(DEFAULT, 'Wait 2 seconds between calls')
 
 
-def get_wallet_amount(wallet_address, wallet_name):
-    resp = requests.get('https://api.nibiru.exploreme.pro/accounts/{}'.format(wallet_address))
-    if resp.status_code != 200:
-        logger.log(ABORTED, '{} | {} not found on explorer'.format(wallet_address, wallet_name))
-        if reroll_enabled:
-            logger.log(SUCCESS, '{} | {} added to reroll.yml'.format(wallet_address, wallet_name))
-            reroll.append({'name': wallet_name, 'address': wallet_address})
-    return resp
+def get_wallet_amount(wallet_address):
+    # Define the query path and data for querying the wallet balance
+    query_path = '/custom/bank/balances'
+    data = {
+        "base_req": {
+            "address": wallet_address,
+            "chain_id": "nibiru-itn-2",
+            "denom": "unibi",
+        }
+    }
+
+    # Create the HTTP request payload
+    payload = {
+        "method": "abci_query",
+        "jsonrpc": "2.0",
+        "params": {
+            "path": query_path,
+            "data": json.dumps(data)
+        },
+        "id": 1
+    }
+    # Send the POST request to the Cosmos node's RPC endpoint
+    response = requests.post('localhost:26657', json=payload)
+
+    wallet_balance = 0
+    if response.status_code == 200:
+        result = response.json()
+        # Extract and print the wallet balance from the result
+        wallet_balance = result.get('result', {}).get('response', {}).get('value', '')
+        print(f"Wallet Balance: {wallet_balance}")
+    else:
+        print(f"Error: {response.status_code}, {response.text}")
+    return wallet_balance
 
 # This is the main loop who harvest all wallet & all asset
 def loop_wallet(wallets):
@@ -147,15 +147,8 @@ def loop_wallet(wallets):
         wallet_name = wallet['name']
         wallet_address = wallet['address']
         logger.log(INFO, 'Proceed {} | {}'.format(wallet_address, wallet_name))
-        resp = get_wallet_amount(wallet_address, wallet_name)
-        if resp.status_code != 200:
-            continue
-        harvestable = check_wallet_amount(resp.json(), wallet_name)
-        if harvestable is None:
-            logger.log(ABORTED, '{} | {} nothing to harvest'.format(wallet_address, wallet_name))
-            continue
-        logger.log(DEFAULT, 'Gonna harvest {}'.format(harvestable))
-        harvest_wallet(harvestable)
+        wallet_amount = get_wallet_amount(wallet_address)
+        harvest_wallet(wallet_amount)
 
 
 if __name__ == '__main__':
