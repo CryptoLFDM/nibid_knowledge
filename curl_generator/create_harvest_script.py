@@ -3,7 +3,7 @@ import yaml
 stream = open('wallet.yml', 'r')
 obj = yaml.safe_load(stream)
 addresses = []
-patterns = ['vienne']
+patterns = ['london', 'paris']
 
 def epur_yaml(wallets):
     harvest = []

@@ -9,17 +9,8 @@ result = []
 def epur_yaml():
     stream = open('wallet.yml', 'r')
     obj = yaml.safe_load(stream)
-    if patterns == []:
-        stream.close()
-        return obj
-
-    harvest = []
-    for wallet in obj:
-        for pattern in patterns:
-            if pattern in wallet['name']:
-                harvest.append(wallet)
     stream.close()
-    return harvest
+    return obj
 
 
 async def make_numbers(obj):
@@ -27,10 +18,12 @@ async def make_numbers(obj):
         yield i
 
 
-async def make_account():
-    stream = open('sample/{}'.format(args.iterator), 'r')
+async def make_account(iterator: int):
+    if not os.path.isdir('sample'):
+        os.makedirs('sample')
+    stream = open('sample/{}'.format(iterator), 'r')
     obj = yaml.safe_load(stream)
-    url = "https://faucet.itn-1.nibiru.fi/"
+    url = "https://faucet.itn-2.nibiru.fi/"
     async with aiohttp.ClientSession() as session:
         post_tasks = []
         # prepare the coroutines that post
@@ -46,6 +39,7 @@ async def do_post(session, url, x):
     json_object = json.dumps(req, indent=4)
     async with session.post(url, data=json_object) as response:
         result.append(await response.text())
+
 
 def display_result():
     ko = 0
@@ -68,7 +62,7 @@ addresses = []
 patterns = []
 
 if args.mode == 'gen':
-    i = 1
+    i = 0
     wallets = epur_yaml()
     x = 0
     if not os.path.exists('sample'):
@@ -89,7 +83,7 @@ if args.mode == 'gen':
 else:
     loop = asyncio.get_event_loop()
     try:
-        loop.run_until_complete(make_account())
+        loop.run_until_complete(make_account(iterator))
         display_result()
     except:
         pass
