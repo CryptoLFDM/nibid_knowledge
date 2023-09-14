@@ -83,7 +83,7 @@ if args.mode == 'gen':
 else:
     loop = asyncio.get_event_loop()
     try:
-        loop.run_until_complete(make_account(iterator))
+        loop.run_until_complete(make_account(args.iterator))
         display_result()
     except:
         pass
