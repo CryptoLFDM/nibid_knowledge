@@ -63,8 +63,8 @@ def collect_wallet_info():
     return wallets
 
 
-def delete_wallet(name):
-    args = '/usr/local/bin/nibid keys delete {} -y'.format(name)
+def delete_wallet(name: str):
+    args = 'nibiru --home /opt/chimera/nibiru keys delete {} -y'.format(name)
     logger.log(INFO, 'Gonna play {}'.format(args))
     process = subprocess.Popen([args],
                                stdout=subprocess.PIPE,
@@ -72,11 +72,18 @@ def delete_wallet(name):
                                universal_newlines=True,
                                shell=True)
     if wallet_password != '':
-        process.communicate(wallet_password)
+        stdout, stderr = process.communicate(wallet_password)
+        print(stdout, stderr)
+    process = subprocess.Popen(["echo", "cleanup"],
+                               stdout=subprocess.PIPE,
+                               stdin=subprocess.PIPE,
+                               universal_newlines=True,
+                               shell=True)
+    stdout, stderr = process.communicate()
+    print(stdout, stderr)
 
-# This method run nibid tx
-def fire_cmd(address, asset, amount):
-    args = '/usr/local/bin/nibid tx bank send {} {} {}{} --fees 5000unibi --log_format json -y'.format(address,
+def collect_wallet_by_denom(address: str, asset: str, amount: float):
+    args = 'nibiru --home /opt/chimera/nibiru tx bank send {} {} {}{} --fees 5000unibi --log_format json -y'.format(address,
                                                                                                        wallet_who_collect,
                                                                                                        amount,
                                                                                                        asset)
@@ -87,76 +94,63 @@ def fire_cmd(address, asset, amount):
                                universal_newlines=True,
                                shell=True)
     if wallet_password != '':
-        process.communicate(wallet_password)
+        stdout, stderr = process.communicate(wallet_password)
+        print(stdout, stderr)
+    process = subprocess.Popen(["echo", "cleanup"],
+                               stdout=subprocess.PIPE,
+                               stdin=subprocess.PIPE,
+                               universal_newlines=True,
+                               shell=True)
+    stdout, stderr = process.communicate()
+    print(stdout, stderr)
+    
+def harvest_wallet(address: str, name: str, wallet: dict):
+    unibi = 0
+    uusdt = 0
+    unusd = 0
+    for coin in wallet['balances']:
+        if coin['denom'] == 'unibi':
+            unibi = float(coin['amount'])
+        elif coin['denom'] == 'unusd':
+            unusd = float(coin['amount'])
+        elif coin['denom'] == 'uusdt':
+            uusdt = float(coin['amount'])
+    if unusd > 0:
+        collect_wallet_by_denom(address, 'unusd', unusd)
+    if uusdt > 0:
+        collect_wallet_by_denom(address, 'uusdt', uusdt)
+    if unibi > 16000:
+        collect_wallet_by_denom(address, 'unibi', (unibi - 15000.0))
+#    if unibi > 0 and unibi < 4500:
+#        delete_wallet(name)
+    
+        
+# This method run nibid tx
+def fire_cmd(address, name):
+    harvestable = {}
+    save = 0
+    args = 'nibiru query  bank balances {}'.format(address)
+    with subprocess.Popen([args],
+                               stdout=subprocess.PIPE,
+                               stdin=subprocess.PIPE,
+                               shell=True, text=True) as process:
+        stdout, stderr = process.communicate()
+
+        
+        parsed_dicts = yaml.safe_load(stdout)
+        if len(parsed_dicts['balances']) > 0:
+               harvest_wallet(address, name, parsed_dicts)
 
 
-def harvest_wallet(harvestable):
-    fees = 5000
-    for asset in harvestable['assets']:
-        logger.log(DEFAULT,
-                   'Gonna harvest {} from {} | {}'.format(asset, harvestable['wallet_name'], harvestable['address']))
-        fire_cmd(harvestable['address'], asset, harvestable['assets'][asset])
-        time.sleep(2)
-        logger.log(DEFAULT, 'Wait 2 seconds between calls')
-        fees = fees + 5000
-    logger.log(INFO,
-               'Gonna harvest {} from {} | {}'.format('unibi', harvestable['wallet_name'], harvestable['address']))
-    fire_cmd(harvestable['address'], 'unibi', harvestable['unibi'] - fees)
-    time.sleep(2)
-    delete_wallet(harvestable['wallet_name'])
-    logger.log(DEFAULT, 'Wait 2 seconds between calls')
-
-
-def get_wallet_amount(wallet_address):
-    # Define the query path and data for querying the wallet balance
-    query_path = '/custom/bank/balances'
-    data = {
-        "base_req": {
-            "address": wallet_address,
-            "chain_id": "nibiru-itn-2",
-            "denom": "unibi",
-        }
-    }
-
-    # Create the HTTP request payload
-    payload = {
-        "method": "abci_query",
-        "jsonrpc": "2.0",
-        "params": {
-            "path": query_path,
-            "data": json.dumps(data)
-        },
-        "id": 1
-    }
-    # Send the POST request to the Cosmos node's RPC endpoint
-    response = requests.post('localhost:26657', json=payload)
-
-    wallet_balance = 0
-    if response.status_code == 200:
-        result = response.json()
-        # Extract and print the wallet balance from the result
-        wallet_balance = result.get('result', {}).get('response', {}).get('value', '')
-        print(f"Wallet Balance: {wallet_balance}")
-    else:
-        print(f"Error: {response.status_code}, {response.text}")
-    return wallet_balance
-
+                
 # This is the main loop who harvest all wallet & all asset
 def loop_wallet(wallets):
     for wallet in wallets:
         wallet_name = wallet['name']
         wallet_address = wallet['address']
-        logger.log(INFO, 'Proceed {} | {}'.format(wallet_address, wallet_name))
-        wallet_amount = get_wallet_amount(wallet_address)
-        harvest_wallet(wallet_amount)
+        fire_cmd(wallet_address, wallet_name)
 
 
 if __name__ == '__main__':
     wallets_from_file = collect_wallet_info()
     loop_wallet(wallets_from_file)
-    if reroll_enabled:
-        logger.log(DEFAULT, 'dumping reroll to {}'.format(reroll_location))
-        with open(reroll_location, 'w') as file:
-            yaml.dump(reroll, file)
-        with open(delete_location, 'w') as file:
-            yaml.dump(delete, file)
